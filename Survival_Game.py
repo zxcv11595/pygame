@@ -2,15 +2,15 @@ import pygame
 import sys
 import random
 
-# 초기화
+#초기화
 pygame.init()
 
-# 화면 크기 및 색상 설정
+#화면 크기 및 색상 설정
 WIDTH, HEIGHT = 800, 600
 window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Survival Game")
 
-# 색깔
+#색깔
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -92,11 +92,11 @@ while running:
                 bullet = player.shoot()
                 bullets.append(bullet)
 
-    # enemy가 palyer 추격
+    #enemy가 palyer 추격
     if not is_attacking:
         enemy.move_towards(player.x, player.y)
 
-    # player 이동
+    #player 이동
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
         player.move("left")
@@ -107,21 +107,21 @@ while running:
     if keys[pygame.K_DOWN]:
         player.move("down")
 
-    # 충돌 검사
+    #충돌 검사
     if abs(player.x - enemy.x) < player.width and abs(player.y - enemy.y) < player.height:
         print("Game Over!")
         running = False
 
-    # 화면 초기화
+    #화면 초기화
     window.fill(BLACK)
 
-    # player 그리기
+    #player 그리기
     pygame.draw.rect(window, WHITE, (player.x, player.y, player.width, player.height))
 
-    # enemy 그리기
+    #enemy 그리기
     pygame.draw.rect(window, RED, (enemy.x, enemy.y, enemy.width, enemy.height))
 
-    # 총알 이동 및 그리기
+    #총알 이동 및 그리기
     for bullet in bullets:
         bullet.move()
         bullet.draw(window)
