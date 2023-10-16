@@ -17,19 +17,8 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-#총알 클래스
-class Bullet:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.radius = 3
-        self.velocity = 8
-
-    def move(self):
-        self.y -= self.velocity
-
-    def draw(self, window):
-        pygame.draw.circle(window, BLUE, (self.x, self.y), self.radius)
+#프레임
+framerate = 100
 
 #Player 클래스
 class Player:
@@ -48,10 +37,6 @@ class Player:
             self.y -= self.velocity
         elif direction == "down" and self.y + self.velocity < WIDTH - self.height:
             self.y += self.velocity
-
-    def shoot(self):
-        bullet = Bullet(self.x + self.width//2, self.y)
-        return bullet
 
 bullets = []
 
@@ -78,56 +63,87 @@ class Enemy:
 player = Player()
 enemy = Enemy()
 
-running = True
-is_attacking = False
+#체력, 점수, 경험치, 레벨
+score = 0
+hp = 100
+level = 1
+exp = 0
 
-clock = pygame.time.Clock()
 
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                bullet = player.shoot()
-                bullets.append(bullet)
+#게임 종료 후 점수 표시
+def Display_score(score):
+    value = pygame.font.SysFont('comicsans', 30).render("Your Score: " + str(score), True, BLACK)
+    window.blit(value, [0, 0])
 
-    #enemy가 palyer 추격
-    if not is_attacking:
-        enemy.move_towards(player.x, player.y)
+#체력, 레벨, 경험치 표시
+def Display_info(hp, level, exp):
+    hp_text = pygame.font.SysFont('comicsans', 30).render("HP: " + str(hp), True, BLACK)
+    level_text = pygame.font.SysFont('comicsans', 30).render("Level: " + str(level), True, BLACK)
+    exp_text = pygame.font.SysFont('comicsans', 30).render("exp: " + str(exp), True, BLACK)
+    window.blit(hp_text, [10, 10])
+    window.blit(level_text, [10, 40])
+    window.blit(exp_text, [10, 70])
 
-    #player 이동
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        player.move("left")
-    if keys[pygame.K_RIGHT]:
-        player.move("right")
-    if keys[pygame.K_UP]:
-        player.move("up")
-    if keys[pygame.K_DOWN]:
-        player.move("down")
+#메인 함수
+def gameLoop():
+    global player, enemy, bullets
+    global score, hp, level, exp
 
-    #충돌 검사
-    if abs(player.x - enemy.x) < player.width and abs(player.y - enemy.y) < player.height:
-        print("Game Over!")
-        running = False
+     #게임 종료
+    game_over = False
+    game_close = False
 
-    #화면 초기화
-    window.fill(BLACK)
+    while not game_over: 
+        while game_close == True:
+            window.fill(WHITE)
+            Display_score(score)
+            pygame.display.update()
 
-    #player 그리기
-    pygame.draw.rect(window, WHITE, (player.x, player.y, player.width, player.height))
+        #재도전
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    game_over = True
+                    game_close = False
+                if event.key == pygame.K_c:
+                    gameLoop()
 
-    #enemy 그리기
-    pygame.draw.rect(window, RED, (enemy.x, enemy.y, enemy.width, enemy.height))
+        #player 이동
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            player.move("left")
+        if keys[pygame.K_RIGHT]:
+            player.move("right")
+        if keys[pygame.K_UP]:
+            player.move("up")
+        if keys[pygame.K_DOWN]:
+            player.move("down")            
 
-    #총알 이동 및 그리기
-    for bullet in bullets:
-        bullet.move()
-        bullet.draw(window)
+        #enemy가 palyer 추격
+        if not game_over:
+            enemy.move_towards(player.x, player.y)
 
-    pygame.display.flip()
-    clock.tick(60)
+        #충돌 검사
+        if abs(player.x - enemy.x) < player.width and abs(player.y - enemy.y) < player.height:
+            print("Game Over!")
+            game_close = True
 
-pygame.quit()
-sys.exit()
+        #화면 초기화
+        window.fill(WHITE)
+
+        #player 그리기
+        pygame.draw.rect(window, BLUE, (player.x, player.y, player.width, player.height))
+
+        #enemy 그리기
+        pygame.draw.rect(window, RED, (enemy.x, enemy.y, enemy.width, enemy.height))
+
+        #프레임 100Hz 제한
+        pygame.time.Clock().tick(framerate)    
+
+        Display_info(hp, level, exp)
+        pygame.display.update()
+
+    pygame.quit()
+    quit()
+
+gameLoop()
