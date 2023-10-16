@@ -38,8 +38,6 @@ class Player:
         elif direction == "down" and self.y + self.velocity < WIDTH - self.height:
             self.y += self.velocity
 
-bullets = []
-
 #Enemy 클래스
 class Enemy:
     def __init__(self):
@@ -86,7 +84,7 @@ def Display_info(hp, level, exp):
 
 #메인 함수
 def gameLoop():
-    global player, enemy, bullets
+    global player, enemy
     global score, hp, level, exp
 
      #게임 종료
