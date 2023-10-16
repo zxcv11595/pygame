@@ -1,5 +1,3 @@
-
-
 import pygame
 import time
 import random
@@ -17,7 +15,7 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
 
 # Snake and food properties
 snake_pos = [100, 50]
@@ -36,24 +34,26 @@ framerate = 15
 score = 0
 hunger = 100
 
+# Invincible time
+invincible_time = 0
+
 # Maximum snake length
 max_snake_length = 10  # Adjust this value as needed
 
-# Competitor1 Snake properties
-competitor1_pos = [320, 300]
-competitor1_body = [[320, 300], [320, 310], [320, 320]]
-competitor1_directions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
-competitor1_direction = random.choice(competitor1_directions)
-competitor1_direction_change_interval = 5  # Change direction every 20 frames
-competitor1_direction_change_counter = 0
+# Enemy Snakes properties
+enemy_snakes_snakes = []
+num_enemy_snakes = 1  # Adjust the number of enemy_snakes as needed
 
-competitor2_pos = [320, 300]
-competitor2_body = [[320, 300], [320, 310], [320, 320]]
-competitor2_directions = ['UP', 'DOWN', 'LEFT', 'RIGHT']
-competitor2_direction = random.choice(competitor2_directions)
-competitor2_direction_change_interval = 5  # Change direction every 20 frames
-competitor2_direction_change_counter = 0
-
+for _ in range(num_enemy_snakes):
+    enemy_snakes = {
+        'pos': [400, 300],
+        'body': [[400, 300], [390, 300], [380, 300]],  # Initialize with an empty body
+        'directions': ['UP', 'DOWN', 'LEFT', 'RIGHT'],
+        'direction': random.choice(['UP', 'DOWN', 'LEFT', 'RIGHT']),
+        'direction_change_interval': 5,  # Change direction every 5 frames
+        'direction_change_counter': 0
+    }
+    enemy_snakes_snakes.append(enemy_snakes)
 
 # Display Score function
 def Your_score(score):
@@ -73,9 +73,8 @@ def gameLoop():
     global snake_pos, snake_body
     global food_pos, food_spawn
     global score, hunger, framerate
-    global competitor1_pos, competitor1_body, competitor1_direction
-    global competitor2_pos, competitor2_body, competitor2_direction
-    global competitor1_direction_change_counter, competitor2_direction_change_counter
+    global enemy_snakes_snakes, num_enemy_snakes
+    global invincible_time
 
     # Game Over
     game_over = False
@@ -129,61 +128,58 @@ def gameLoop():
         if direction == 'RIGHT':
             snake_pos[0] += 10
 
-        # Moving the competitor1 snake
-        if competitor1_direction == 'UP':
-            competitor1_pos[1] -= 10
-        if competitor1_direction == 'DOWN':
-            competitor1_pos[1] += 10
-        if competitor1_direction == 'LEFT':
-            competitor1_pos[0] -= 10
-        if competitor1_direction == 'RIGHT':
-            competitor1_pos[0] += 10
+        for enemy_snakes in enemy_snakes_snakes:
+            if enemy_snakes['direction'] == 'UP':
+                enemy_snakes['pos'][1] -= 10
+            if enemy_snakes['direction'] == 'DOWN':
+                enemy_snakes['pos'][1] += 10
+            if enemy_snakes['direction'] == 'LEFT':
+                enemy_snakes['pos'][0] -= 10
+            if enemy_snakes['direction'] == 'RIGHT':
+                enemy_snakes['pos'][0] += 10
 
-        if competitor2_direction == 'UP':
-            competitor2_pos[1] -= 10
-        if competitor2_direction == 'DOWN':
-            competitor2_pos[1] += 10
-        if competitor2_direction == 'LEFT':
-            competitor2_pos[0] -= 10
-        if competitor2_direction == 'RIGHT':
-            competitor2_pos[0] += 10
-
-        # Snake body growing mechanism: insert a new position (snake_pose) on
+        # Snake body growing mechanism
         snake_body.insert(0, list(snake_pos))
         if snake_pos[0] == food_pos[0] and snake_pos[1] == food_pos[1]:
-            score += 1
-            framerate += 2
-            food_spawn = False
-            hunger += 10
+            if invincible_time <= 0:
+                score += 1
+                framerate += 2
+                food_spawn = False
+                hunger += 50
+                # Activate invincible state for 5 seconds (adjust the duration as needed)
+                invincible_time = 0.3 * framerate
+                # Check if it's time to add a new enemy snake
+                new_enemy_snake = {
+                    'pos': [400, 300],
+                    'body': [[400, 300], [390, 300], [380, 300]],  # Initialize with an empty body
+                    'directions': ['UP', 'DOWN', 'LEFT', 'RIGHT'],
+                    'direction': random.choice(['UP', 'DOWN', 'LEFT', 'RIGHT']),
+                    'direction_change_interval': 5,  # Change direction every 5 frames
+                    'direction_change_counter': 0
+                }
+                enemy_snakes_snakes.append(new_enemy_snake)
         else:
             snake_body.pop()
 
-        if hunger >= 100:
-            hunger = 100
-
         # Decrement hunger over time
-        hunger -= 0.1
+        hunger -= 0.3
 
         # Check if hunger reaches 0
         if hunger <= 0:
             game_close = True
 
-        # Competitor1 Snake body growing mechanism
-        competitor1_body.insert(0, list(competitor1_pos))
-        if len(competitor1_body) > max_snake_length:
-            competitor1_body.pop()
-        if competitor1_pos[0] == food_pos[0] and competitor1_pos[1] == food_pos[1]:
-            food_spawn = False
-            # Add a new position to the competitor1_body list
-            competitor1_body.insert(0, list(competitor1_pos))
+        if hunger >= 100:
+            hunger = 100
 
-        competitor2_body.insert(0, list(competitor2_pos))
-        if len(competitor2_body) > max_snake_length:
-            competitor2_body.pop()
-        if competitor2_pos[0] == food_pos[0] and competitor2_pos[1] == food_pos[1]:
-            food_spawn = False
-            # Add a new position to the competitor1_body list
-            competitor2_body.insert(0, list(competitor2_pos))
+        # Enemy Snake body growing mechanism
+        for enemy_snakes in enemy_snakes_snakes:
+            enemy_snakes['body'].insert(0, list(enemy_snakes['pos']))
+            if len(enemy_snakes['body']) > max_snake_length:
+                enemy_snakes['body'].pop()
+            if enemy_snakes['pos'][0] == food_pos[0] and enemy_snakes['pos'][1] == food_pos[1]:
+                food_spawn = False
+                # Add a new position to the enemy_snakes_body list
+                enemy_snakes['body'].insert(0, list(enemy_snakes['pos']))
 
         if not food_spawn:
             food_pos = [random.randrange(1, (WIDTH // 10)) * 10, random.randrange(1, (HEIGHT // 10)) * 10]
@@ -193,28 +189,22 @@ def gameLoop():
         if len(snake_body) > max_snake_length:
             snake_body.pop()
 
-        # Change competitor1_direction periodically
-        competitor1_direction_change_counter += 1
-        if competitor1_direction_change_counter >= competitor1_direction_change_interval:
-            competitor1_direction = random.choice(competitor1_directions)
-            competitor1_direction_change_counter = 0
-
-        competitor2_direction_change_counter += 1
-        if competitor2_direction_change_counter >= competitor2_direction_change_interval:
-            competitor2_direction = random.choice(competitor2_directions)
-            competitor2_direction_change_counter = 0
+        # Change enemy_snakes_direction periodically
+        for enemy_snakes in enemy_snakes_snakes:
+            enemy_snakes['direction_change_counter'] += 1
+            if enemy_snakes['direction_change_counter'] >= enemy_snakes['direction_change_interval']:
+                enemy_snakes['direction'] = random.choice(enemy_snakes['directions'])
+                enemy_snakes['direction_change_counter'] = 0
 
         window.fill(BLACK)
         for pos in snake_body:
             pygame.draw.rect(window, GREEN, pygame.Rect(pos[0], pos[1], 10, 10))
 
-        for pos in competitor1_body:
-            pygame.draw.rect(window, RED, pygame.Rect(pos[0], pos[1], 10, 10))
+        for enemy_snakes in enemy_snakes_snakes:
+            for pos in enemy_snakes['body']:
+                pygame.draw.rect(window, RED, pygame.Rect(pos[0], pos[1], 10, 10))
 
-        for pos in competitor2_body:
-            pygame.draw.rect(window, RED, pygame.Rect(pos[0], pos[1], 10, 10))
-
-        pygame.draw.rect(window, BLUE, pygame.Rect(food_pos[0], food_pos[1], 10, 10))
+        pygame.draw.rect(window, YELLOW, pygame.Rect(food_pos[0], food_pos[1], 10, 10))
 
         # Game Over conditions
         if snake_pos[0] < 0 or snake_pos[0] > WIDTH - 10:
@@ -227,32 +217,27 @@ def gameLoop():
             if snake_pos[0] == block[0] and snake_pos[1] == block[1]:
                 game_close = True
 
-        # Check for collision with the competitor1's body
-        for block in competitor1_body:
-            if snake_pos[0] == block[0] and snake_pos[1] == block[1]:
-                game_close = True
+        # Check for collision with the enemy_snakes's body
+        for enemy_snakes in enemy_snakes_snakes:
+            for block in enemy_snakes['body']:
+                if snake_pos[0] == block[0] and snake_pos[1] == block[1]:
+                    if invincible_time <= 0:
+                        game_close = True
+            for block in snake_body:
+                if (enemy_snakes['pos'][0] == block[0] and enemy_snakes['pos'][1] == block[1]):
+                    # Check if the snake is not in the invincible state
+                    if invincible_time <= 0:
+                        game_close = True
 
-        for block in competitor2_body:
-            if snake_pos[0] == block[0] and snake_pos[1] == block[1]:
-                game_close = True
+        # Decrease invincible_time by 0.3 in each frame
+        if invincible_time > 0:
+            invincible_time -= 0.3
 
-        for block in snake_body:
-            if (competitor1_pos[0] == block[0] and competitor1_pos[1] == block[1]) or (competitor2_pos[0] == block[0] and competitor2_pos[1] == block[1]):
-                game_close = True
-
-        # Inside the game loop
-        # Competitor1 Snake collision with walls
-        if (competitor1_pos[0] < 0 or competitor1_pos[0] >= WIDTH or competitor1_pos[1] < 0 or competitor1_pos[1] >= HEIGHT):
-            # Reset competitor1 snake's position and body
-            competitor1_pos = [320, 300]
-            competitor1_body = [[320, 300], [320, 310], [320, 320]]
-            competitor1_direction = random.choice(competitor1_directions)
-
-        if (competitor2_pos[0] < 0 or competitor2_pos[0] >= WIDTH or competitor2_pos[1] < 0 or competitor2_pos[1] >= HEIGHT):
-            # Reset competitor1 snake's position and body
-            competitor2_pos = [320, 300]
-            competitor2_body = [[320, 300], [320, 310], [320, 320]]
-            competitor2_direction = random.choice(competitor2_directions)
+        # Enemy Snake collision with walls
+        for enemy_snakes in enemy_snakes_snakes:
+            if (enemy_snakes['pos'][0] < 0 or enemy_snakes['pos'][0] >= WIDTH or enemy_snakes['pos'][1] < 0 or enemy_snakes['pos'][1] >= HEIGHT):
+                # Reset enemy_snakes snake's position and body
+                enemy_snakes_snakes.remove(enemy_snakes)
 
         display_info(score, hunger)
         pygame.display.update()
